@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GalaxyClock Font Studio</title>
+<style>
+:root{color-scheme:dark;--bg:#07101f;--panel:#101d31;--line:#294467;--text:#eef6ff;--muted:#a8bdd8;--blue:#48a8ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#142c4b,#07101f 60%);color:var(--text);font-family:system-ui,Arial,sans-serif}
+main{max-width:1000px;margin:auto;padding:24px 15px 50px}.hero,.panel{border:1px solid var(--line);background:#101d31e8;border-radius:18px;padding:20px;margin-bottom:15px}
+h1{margin:0 0 8px;font-size:clamp(1.6rem,4vw,2.4rem)}h2{font-size:1.1rem;margin-top:0}p,.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:15px}
+label{display:block;margin:15px 0 7px;font-weight:650}.fieldline{display:flex;justify-content:space-between;gap:10px}.val{color:var(--blue);font-variant-numeric:tabular-nums}input[type=file]{width:100%;padding:14px;background:#081426;border:1px dashed var(--blue);border-radius:12px;color:var(--text)}input[type=range]{width:100%;accent-color:var(--blue)}
+.preview{min-height:230px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;border-radius:15px;background:linear-gradient(145deg,#071326,#18365b);border:1px solid #31577f;overflow:hidden}
+#sample{font-size:clamp(2.2rem,8vw,5rem);line-height:1.2;white-space:nowrap;transform-origin:center;max-width:100%;overflow:hidden}
+input[type=text]{width:100%;padding:10px;border-radius:10px;background:#081426;color:var(--text);border:1px solid var(--line)}
+button{border:0;border-radius:11px;padding:12px 17px;background:var(--blue);color:#04101b;font-weight:800;cursor:pointer;margin-top:12px}button:disabled{opacity:.5;cursor:wait}.note{font-size:.9rem;line-height:1.7;border-right:3px solid var(--blue);padding-right:12px}
+#status{white-space:pre-wrap;margin-top:12px;color:#ffd4a3} .pill{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:4px 10px;color:var(--muted);font-size:.8rem}
+</style>
+</head>
+<body><main>
+<section class="hero"><span class="pill">LOCAL FONT EDITOR</span><h1>GalaxyClock Font Studio</h1><p>ارفع ملف الخط من جهازك، وعدّل ارتفاع الحروف وعرضها وميلها وسُمكها، وبعدها نزّل نسخة TTF معدّلة فعليًا.</p><p class="note">الملف بيتعالج محليًا على جهاز الكمبيوتر اللي بتشغّل عليه البرنامج. التعديل الحقيقي للخط يحتاج تشغيل خادم Python صغير، مش مجرد فتح HTML في المتصفح.</p></section>
+<div class="grid">
+<section class="panel"><h2>1 — اختار الخط واضبطه</h2>
+<label for="font">ملف الخط (TTF أو OTF)</label><input id="font" type="file" accept=".ttf,.otf,font/ttf,font/otf">
+<label>نص المعاينة</label><input id="text" type="text" value="12:34  0123456789">
+<div class="fieldline"><label for="height">الارتفاع</label><span class="val" id="heightV">1.00×</span></div><input id="height" type="range" min=".5" max="2" step=".05" value="1">
+<div class="fieldline"><label for="width">العرض</label><span class="val" id="widthV">1.00×</span></div><input id="width" type="range" min=".5" max="2" step=".05" value="1">
+<div class="fieldline"><label for="embolden">زيادة السُمك</label><span class="val" id="emboldenV">0</span></div><input id="embolden" type="range" min="0" max="120" step="2" value="0">
+<div class="fieldline"><label for="slant">الميل</label><span class="val" id="slantV">0°</span></div><input id="slant" type="range" min="-20" max="20" step="1" value="0">
+<button id="download">تعديل الخط وتنزيل TTF</button><div id="status" role="status"></div>
+</section>
+<section class="panel"><h2>2 — المعاينة</h2><div class="preview"><div id="sample">12:34 0123456789</div><p class="muted">المعاينة تستخدم الخط المرفوع داخل المتصفح إن أمكن.</p></div><p class="note">الارتفاع والعرض والميل بتتطبّق على حدود الحروف داخل ملف الخط. زيادة السُمك بتوسّع حدود الحروف، وممكن تختلف نتيجتها حسب تصميم الخط.</p></section>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let loadedFontUrl=null;
+function sync(){
+ for(const id of ["height","width","embolden","slant"]){$(id+"V").textContent=id==="height"||id==="width"?Number($(id).value).toFixed(2)+"×":id==="slant"?$(id).value+"°":$(id).value;}
+ const f=$("font").files[0], s=$("sample");
+ s.textContent=$("text").value||"12:34 0123456789";
+ s.style.transform=`scaleX(${$("width").value}) scaleY(${$("height").value}) skewX(${$("slant").value}deg)`;
+ s.style.webkitTextStroke=(Number($("embolden").value)/100)+"px currentColor";
+ if(f){
+   if(loadedFontUrl)URL.revokeObjectURL(loadedFontUrl);
+   loadedFontUrl=URL.createObjectURL(f);
+   const face=new FontFace("UploadedFont",`url(${loadedFontUrl})`);
+   face.load().then(font=>{document.fonts.add(font);s.style.fontFamily='"UploadedFont",system-ui';}).catch(()=>{s.style.fontFamily="system-ui";});
+ } else s.style.fontFamily="system-ui";
+}
+for(const id of ["height","width","embolden","slant","text"])$(id).addEventListener("input",sync);
+$("font").addEventListener("change",sync);sync();
+$("download").addEventListener("click",async()=>{
+ const f=$("font").files[0];if(!f){$("status").textContent="اختار ملف الخط الأول.";return;}
+ const form=new FormData();form.append("font",f);for(const id of ["height","width","embolden","slant"])form.append(id,$(id).value);
+ $("download").disabled=true;$("status").textContent="جاري تعديل الخط...";
+ try{
+   const response=await fetch("/process",{method:"POST",body:form});
+   if(!response.ok){const data=await response.json();throw new Error(data.error||"حصل خطأ أثناء تعديل الخط.");}
+   const blob=await response.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");
+   a.href=url;a.download=f.name.replace(/\.(ttf|otf)$/i,"")+"_modified.ttf";a.click();URL.revokeObjectURL(url);
+   $("status").textContent="تم إنشاء نسخة الخط المعدّلة وتنزيلها.";
+ }catch(e){$("status").textContent=e.message+"\nتأكد إنك شغّلت app.py وثبّتت المكتبات المطلوبة.";}
+ finally{$("download").disabled=false;}
+});
+</script></body></html>
